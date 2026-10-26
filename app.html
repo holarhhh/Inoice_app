@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Einvoice</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: white page, thin header with the Einvoice mark, one centred column. Light gray for secondary blocks, black for actions. */
+:root {
+  --white: #FFFFFF;
+  --gray-50: #F5F5F5;
+  --gray-200: #E5E7EB;
+  --gray-500: #6B7280;
+  --black: #18181B;
+  --black-deep: #09090B;
+
+  --bg: var(--white);
+  --card: var(--white);
+  --soft: var(--gray-50);
+  --line: var(--gray-200);
+  --muted: var(--gray-500);
+  --ink: var(--black);
+  --strong: var(--black-deep);
+  --accent: var(--black);
+  --accent-ink: var(--white);
+  --danger: var(--black-deep);
+  --radius: 10px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgba(9, 9, 11, 0.06);
+
+  /* The paper is what gets saved, so it uses the same palette. */
+  --paper: var(--white);
+  --paper-ink: var(--black);
+  --paper-muted: var(--gray-500);
+  --paper-line: var(--gray-200);
+  --paper-accent: var(--black);
+  --font-display: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+:root { color-scheme: light; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.5;
+  padding-block: 0 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 600px; margin: 0 auto; min-width: 0; }
+
+.top {
+  display: flex; align-items: center; gap: 12px;
+  padding-block: 18px; margin-bottom: 22px; border-bottom: 1px solid var(--line);
+}
+.mark {
+  flex: none; width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--ink); color: var(--white);
+  display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1;
+}
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; line-height: 1.1; }
+.tag { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
+
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--ink); outline-offset: 2px;
+}
+
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px; background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius); }
+.seg button {
+  min-height: 52px; border-radius: var(--radius-sm); border: 1px solid transparent;
+  background: transparent; color: var(--muted); font-weight: 600; font-size: 18px;
+}
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--white); }
+.hint { margin: 10px 0 0; color: var(--muted); font-size: 16px; }
+
+.link {
+  background: none; border: 0; padding: 10px 0; min-height: 44px; color: var(--ink);
+  font-weight: 600; text-decoration: underline; text-underline-offset: 3px; text-align: left;
+}
+
+.sec { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 24px; display: grid; gap: 16px; }
+.sec h2 {
+  margin: 0; font-family: var(--font-display); font-size: 21px; font-weight: 600; letter-spacing: -0.015em;
+  display: flex; align-items: center; gap: 12px; text-wrap: balance;
+}
+.step {
+  flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--soft); color: var(--ink);
+  border: 1px solid var(--line); display: grid; place-items: center; font-size: 15px; font-weight: 600;
+}
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > span, .lab { font-weight: 600; font-size: 16px; }
+.opt { font-weight: 400; color: var(--muted); }
+input, select, textarea {
+  width: 100%; min-width: 0; font: inherit; color: var(--ink); background: var(--card);
+  border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; min-height: 52px;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--ink); }
+textarea { resize: vertical; min-height: 80px; }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.85; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 420px) { .two.stack-sm { grid-template-columns: minmax(0, 1fr); } }
+
+.item { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: grid; gap: 12px; background: var(--soft); }
+.item .qp { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; }
+.item .foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.lt { font-weight: 600; font-variant-numeric: tabular-nums; }
+.rm { background: none; border: 0; color: var(--muted); font-weight: 600; min-height: 44px; padding: 0 4px; text-decoration: underline; text-underline-offset: 3px; }
+.add {
+  min-height: 52px; border-radius: var(--radius-sm); border: 1px dashed var(--muted); background: var(--card);
+  color: var(--ink); font-weight: 600; font-size: 17px;
+}
+.logo-box { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; background: var(--soft); }
+.logo-box img { display: block; max-width: 140px; max-height: 70px; object-fit: contain; }
+
+.total {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px;
+}
+.total b { font-family: var(--font-display); font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+.primary {
+  width: 100%; min-height: 58px; border: 1px solid var(--ink); border-radius: var(--radius); background: var(--ink); color: var(--white);
+  font-weight: 600; font-size: 19px; font-family: var(--font-display); box-shadow: var(--shadow);
+}
+.primary:hover:not(:disabled), .primary:active:not(:disabled) { background: var(--strong); border-color: var(--strong); }
+.secondary {
+  width: 100%; min-height: 58px; border: 1px solid var(--ink); border-radius: var(--radius); background: var(--white); color: var(--ink);
+  font-weight: 600; font-size: 19px; font-family: var(--font-display);
+}
+.secondary:hover:not(:disabled), .secondary:active:not(:disabled) { background: var(--soft); }
+button:disabled { opacity: 0.55; cursor: progress; }
+.err { color: var(--ink); font-weight: 600; margin: 0; }
+.err:not(:empty) { background: var(--soft); border: 1px solid var(--ink); border-radius: var(--radius-sm); padding: 12px 14px; }
+
+.ready h2 { font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; text-wrap: balance; }
+.ready p.sub { margin: 0 0 16px; color: var(--muted); }
+.actions { display: grid; gap: 12px; margin: 18px 0 8px; }
+.status { min-height: 1.5em; margin: 8px 0; font-weight: 600; color: var(--ink); }
+.pw { width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper); box-shadow: var(--shadow); position: relative; }
+
+/* ---------- The paper (A4 at 794px wide) ---------- */
+.doc {
+  width: 794px; min-height: 1123px; padding: 56px; background: var(--paper); color: var(--paper-ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5; transform-origin: top left;
+  display: flex; flex-direction: column;
+}
+.d-head { display: flex; justify-content: space-between; gap: 32px; align-items: flex-start; }
+.d-logo { display: block; max-width: 220px; max-height: 90px; object-fit: contain; margin-bottom: 12px; }
+.d-bizname { font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 6px; overflow-wrap: anywhere; }
+.d-biz { color: var(--paper-muted); max-width: 400px; overflow-wrap: anywhere; }
+.d-bizname { color: var(--paper-ink); }
+.d-title { text-align: right; flex: none; }
+.d-kind { font-family: var(--font-display); font-weight: 700; font-size: 32px; letter-spacing: 0.1em; color: var(--paper-ink); line-height: 1.1; }
+.d-meta { margin-top: 8px; font-variant-numeric: tabular-nums; }
+.d-meta span { color: var(--paper-muted); margin-right: 8px; }
+.d-rule { height: 2px; background: var(--paper-ink); margin: 28px 0 24px; }
+.d-label { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-muted); font-weight: 600; margin-bottom: 4px; }
+.d-bill { margin-bottom: 28px; overflow-wrap: anywhere; }
+.d-bill b { font-size: 18px; font-weight: 600; }
+.d-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.d-table th { text-align: left; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper-muted); font-weight: 600; padding: 8px 0; border-bottom: 1px solid var(--paper-ink); }
+.d-table td { padding: 12px 0; border-bottom: 1px solid var(--paper-line); vertical-align: top; }
+.d-table .c-num, .d-table th.c-num { text-align: right; white-space: nowrap; padding-left: 14px; }
+.d-table .c-desc { overflow-wrap: anywhere; width: 100%; }
+.d-tot { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-top: 20px; }
+.d-sum { margin-left: auto; min-width: 280px; font-variant-numeric: tabular-nums; }
+.d-sum div { display: flex; justify-content: space-between; gap: 24px; padding: 4px 0; }
+.d-sum .grand { border-top: 1px solid var(--paper-ink); margin-top: 6px; padding-top: 10px; font-weight: 700; font-size: 20px; }
+.d-stamp {
+  border: 3px solid var(--paper-ink); border-radius: 6px; color: var(--paper-ink); font-family: var(--font-display); font-weight: 700;
+  font-size: 28px; letter-spacing: 0.16em; padding: 4px 18px; transform: rotate(-7deg); margin-top: 6px; flex: none;
+}
+.d-notes { margin-top: 28px; overflow-wrap: anywhere; white-space: pre-line; }
+.d-foot { margin-top: auto; padding-top: 40px; text-align: center; color: var(--paper-muted); font-size: 14px; }
+</style>
+
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a href="index.html" aria-label="Einvoice home" style="display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none;min-width:0">
+      <div class="mark" aria-hidden="true">E</div>
+      <div>
+        <div class="brand">Einvoice</div>
+        <p class="tag">Make an invoice or receipt in 2 minutes.</p>
+      </div>
+    </a>
+    <a href="how-it-works.html" style="margin-left:auto;flex:none;color:var(--muted);font-weight:600;font-size:15px;text-decoration:underline;text-underline-offset:3px;padding-block:10px">How it works</a>
+  </header>
+
+  <main id="form-view">
+    <div class="seg" role="group" aria-label="What do you want to make?">
+      <button type="button" id="t-invoice" aria-pressed="true">Invoice</button>
+      <button type="button" id="t-receipt" aria-pressed="false">Receipt</button>
+    </div>
+    <p class="hint" id="type-hint">An invoice asks your customer to pay you.</p>
+    <button type="button" class="link" id="example">Fill in an example so I can see how it works</button>
+
+    <section class="sec" aria-labelledby="h1">
+      <h2 id="h1"><span class="step">1</span>Your business</h2>
+      <label class="field"><span>Business name</span><input id="biz-name" autocomplete="organization" placeholder="e.g. Mama Tunde Foods"></label>
+      <label class="field"><span>Phone <span class="opt">(optional)</span></span><input id="biz-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 0801 234 5678"></label>
+      <label class="field"><span>Address <span class="opt">(optional)</span></span><textarea id="biz-addr" rows="2" placeholder="e.g. 12 Market Road"></textarea></label>
+      <div class="field">
+        <span>Your logo <span class="opt">(optional)</span></span>
+        <button type="button" class="add" id="logo-btn">+ Add your logo</button>
+        <input type="file" id="logo-file" accept="image/*" hidden>
+        <div class="logo-box" id="logo-box" hidden>
+          <img id="logo-prev" alt="Your logo">
+          <button type="button" class="rm" id="logo-rm">Remove logo</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" aria-labelledby="h2">
+      <h2 id="h2"><span class="step">2</span><span id="cust-title">Who is it for?</span></h2>
+      <label class="field"><span>Customer name <span class="opt">(optional)</span></span><input id="cust-name" autocomplete="off" placeholder="e.g. Mr. Adewale"></label>
+      <label class="field"><span>Customer phone <span class="opt">(optional)</span></span><input id="cust-phone" type="tel" inputmode="tel" autocomplete="off" placeholder="e.g. 0802 000 1111"></label>
+    </section>
+
+    <section class="sec" aria-labelledby="h3">
+      <h2 id="h3"><span class="step">3</span>What did they buy?</h2>
+      <div id="items" style="display:grid;gap:12px"></div>
+      <button type="button" class="add" id="add-item">+ Add another item</button>
+      <div class="two stack-sm">
+        <label class="field"><span>Money type</span>
+          <select id="currency">
+            <option value="₦">₦ Naira</option>
+            <option value="$">$ Dollar</option>
+            <option value="£">£ Pound</option>
+            <option value="€">€ Euro</option>
+            <option value="GH₵">GH₵ Cedi</option>
+            <option value="KSh ">KSh Shilling</option>
+            <option value="R">R Rand</option>
+          </select>
+        </label>
+        <label class="field"><span>Discount <span class="opt">(optional)</span></span><input id="discount" inputmode="decimal" placeholder="0"></label>
+      </div>
+      <div class="total" aria-live="polite"><span class="lab" id="total-label">Total to pay</span><b id="total">₦0.00</b></div>
+    </section>
+
+    <section class="sec" aria-labelledby="h4">
+      <h2 id="h4"><span class="step">4</span>A few more things</h2>
+      <div class="two stack-sm">
+        <label class="field"><span>Number</span><input id="num" autocomplete="off"></label>
+        <label class="field"><span>Date</span><input id="date" type="date"></label>
+      </div>
+      <label class="field" id="due-wrap"><span>Pay by <span class="opt">(optional)</span></span><input id="due" type="date"></label>
+      <label class="field" id="paid-wrap" hidden><span>How did they pay?</span>
+        <select id="paid-by">
+          <option>Cash</option>
+          <option>Bank transfer</option>
+          <option>Card</option>
+          <option>Mobile money</option>
+        </select>
+      </label>
+      <label class="field"><span>Note <span class="opt">(optional)</span></span><textarea id="notes" rows="2" placeholder="e.g. Bank: GTBank 0123456789"></textarea></label>
+    </section>
+
+    <section class="sec" style="gap:12px">
+      <p class="err" id="err" role="alert"></p>
+      <button type="button" class="primary" id="go">Make my invoice</button>
+    </section>
+  </main>
+
+  <section id="result" class="ready" hidden>
+    <h2 id="ready-title">Your invoice is ready</h2>
+    <p class="sub">Check it below, then tap a button to save it.</p>
+    <div class="pw" id="pw"><div class="doc" id="doc"></div></div>
+    <div class="actions">
+      <button type="button" class="primary" id="dl-pdf">Download PDF</button>
+      <button type="button" class="secondary" id="dl-img">Download Image</button>
+    </div>
+    <p class="status" id="status" role="status"></p>
+    <button type="button" class="link" id="edit">← Change something</button>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var type = 'invoice', numAuto = true, uid = 0;
+
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  // Ask for the save permission early; the answer is null when it cannot run.
+  var dlP = (window.claude && window.claude.use)
+    ? window.claude.use('downloads').catch(function () { return null; })
+    : Promise.resolve(null);
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function num(v) { var n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : 0; }
+  function sym() { return $('#currency').value; }
+  function money(n) {
+    return sym() + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function qtyText(n) { return n.toLocaleString('en-US', { maximumFractionDigits: 3 }); }
+  function pad(n) { return String(n).padStart(3, '0'); }
+  function suggest() {
+    var n = parseInt(lsGet('qb.n.' + type) || '0', 10) || 0;
+    return (type === 'invoice' ? 'INV-' : 'RCT-') + pad(n + 1);
+  }
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function niceDate(s) {
+    if (!s) return '';
+    var p = s.split('-');
+    if (p.length !== 3) return s;
+    return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  /* ---------- items ---------- */
+  function addItem(v) {
+    v = v || {};
+    var id = ++uid;
+    var el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML =
+      '<label class="field"><span>Item</span><input id="d' + id + '" class="desc" autocomplete="off" placeholder="e.g. Bag of rice"></label>' +
+      '<div class="qp">' +
+        '<label class="field"><span>How many</span><input id="q' + id + '" class="qty" inputmode="decimal" value="1"></label>' +
+        '<label class="field"><span>Price of one</span><input id="p' + id + '" class="price" inputmode="decimal" placeholder="0"></label>' +
+      '</div>' +
+      '<div class="foot"><span>Amount: <span class="lt">' + money(0) + '</span></span><button type="button" class="rm">Remove</button></div>';
+    $('#items').appendChild(el);
+    el.querySelector('.desc').value = v.desc || '';
+    if (v.qty != null) el.querySelector('.qty').value = v.qty;
+    if (v.price != null) el.querySelector('.price').value = v.price;
+    return el;
+  }
+  function readItems() {
+    return Array.prototype.map.call(document.querySelectorAll('#items .item'), function (el) {
+      return { desc: el.querySelector('.desc').value.trim(), qty: num(el.querySelector('.qty').value), price: num(el.querySelector('.price').value), el: el };
+    });
+  }
+  function totals(items) {
+    var sub = items.reduce(function (a, it) { return a + it.qty * it.price; }, 0);
+    var disc = Math.min(Math.max(num($('#discount').value), 0), sub);
+    return { sub: sub, disc: disc, total: sub - disc };
+  }
+  function refresh() {
+    var items = readItems();
+    items.forEach(function (it) { it.el.querySelector('.lt').textContent = money(it.qty * it.price); });
+    $('#total').textContent = money(totals(items).total);
+  }
+
+  /* ---------- type switch ---------- */
+  function setType(t) {
+    type = t;
+    $('#t-invoice').setAttribute('aria-pressed', t === 'invoice');
+    $('#t-receipt').setAttribute('aria-pressed', t === 'receipt');
+    $('#type-hint').textContent = t === 'invoice' ? 'An invoice asks your customer to pay you.' : 'A receipt shows your customer has paid.';
+    $('#due-wrap').hidden = t !== 'invoice';
+    $('#paid-wrap').hidden = t !== 'receipt';
+    $('#go').textContent = 'Make my ' + t;
+    $('#total-label').textContent = t === 'invoice' ? 'Total to pay' : 'Total paid';
+    $('#cust-title').textContent = t === 'invoice' ? 'Who is it for?' : 'Who paid you?';
+    if (numAuto) $('#num').value = suggest();
+  }
+
+  /* ---------- the paper ---------- */
+  function buildDoc(d) {
+    var inv = d.type === 'invoice';
+    var rows = d.items.map(function (it) {
+      return '<tr><td class="c-desc">' + esc(it.desc || 'Item') + '</td><td class="c-num">' + qtyText(it.qty) +
+        '</td><td class="c-num">' + money(it.price) + '</td><td class="c-num">' + money(it.qty * it.price) + '</td></tr>';
+    }).join('');
+    var biz = '';
+    if (d.bizPhone) biz += esc(d.bizPhone) + '<br>';
+    if (d.bizAddr) biz += esc(d.bizAddr).replace(/\n/g, '<br>');
+    var bill = '';
+    if (d.custName || d.custPhone) {
+      bill = '<div class="d-bill"><div class="d-label">' + (inv ? 'Bill to' : 'Received from') + '</div>' +
+        (d.custName ? '<b>' + esc(d.custName) + '</b>' : '') +
+        (d.custPhone ? '<div>' + esc(d.custPhone) + '</div>' : '') + '</div>';
+    }
+    var meta = '<div><span>No.</span>' + esc(d.number) + '</div><div><span>Date</span>' + esc(niceDate(d.date)) + '</div>';
+    if (inv && d.due) meta += '<div><span>Pay by</span>' + esc(niceDate(d.due)) + '</div>';
+    if (!inv) meta += '<div><span>Paid by</span>' + esc(d.paidBy) + '</div>';
+    var sum = '';
+    if (d.t.disc > 0) {
+      sum += '<div><span>Subtotal</span><span>' + money(d.t.sub) + '</span></div>' +
+             '<div><span>Discount</span><span>−' + money(d.t.disc) + '</span></div>';
+    }
+    sum += '<div class="grand"><span>' + (inv ? 'Total due' : 'Total paid') + '</span><span>' + money(d.t.total) + '</span></div>';
+    return '<div class="d-head">' +
+        '<div class="d-biz">' + (d.logo ? '<img class="d-logo" alt="" src="' + d.logo + '">' : '') + '<div class="d-bizname">' + esc(d.bizName) + '</div>' + biz + '</div>' +
+        '<div class="d-title"><div class="d-kind">' + (inv ? 'INVOICE' : 'RECEIPT') + '</div><div class="d-meta">' + meta + '</div></div>' +
+      '</div><div class="d-rule"></div>' + bill +
+      '<table class="d-table"><thead><tr><th>Item</th><th class="c-num">Qty</th><th class="c-num">Price</th><th class="c-num">Amount</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<div class="d-tot">' + (inv ? '<div></div>' : '<div class="d-stamp">PAID</div>') + '<div class="d-sum">' + sum + '</div></div>' +
+      (d.notes ? '<div class="d-notes"><div class="d-label">Note</div>' + esc(d.notes) + '</div>' : '') +
+      '<div class="d-foot">Thank you for your business.</div>';
+  }
+
+  var current = null;
+  function fit() {
+    var pw = $('#pw'), doc = $('#doc');
+    var w = pw.clientWidth;
+    if (!w) return;
+    var k = Math.min(1, w / 794);
+    doc.style.transform = 'scale(' + k + ')';
+    pw.style.height = Math.ceil(doc.offsetHeight * k) + 'px';
+  }
+
+  function fail(msg, focusEl) {
+    $('#err').textContent = msg;
+    if (focusEl) { focusEl.focus(); try { focusEl.scrollIntoView({ block: 'center' }); } catch (e) {} }
+  }
+
+  function generate() {
+    $('#err').textContent = '';
+    var bizName = $('#biz-name').value.trim();
+    if (!bizName) return fail('Type your business name first.', $('#biz-name'));
+    var items = readItems().filter(function (it) { return it.desc || it.price > 0; });
+    if (!items.length) return fail('Add at least one item and its price.', document.querySelector('#items .desc'));
+    var bad = items.filter(function (it) { return it.qty <= 0; })[0];
+    if (bad) return fail('"How many" must be 1 or more.', bad.el.querySelector('.qty'));
+    var t = totals(items);
+    var d = {
+      type: type, bizName: bizName, bizPhone: $('#biz-phone').value.trim(), bizAddr: $('#biz-addr').value.trim(),
+      custName: $('#cust-name').value.trim(), custPhone: $('#cust-phone').value.trim(),
+      logo: logo, items: items, t: t, number: $('#num').value.trim() || suggest(), date: $('#date').value || todayStr(),
+      due: $('#due').value, paidBy: $('#paid-by').value, notes: $('#notes').value.trim()
+    };
+    if (numAuto && $('#num').value === suggest()) lsSet('qb.n.' + type, String(parseInt(lsGet('qb.n.' + type) || '0', 10) + 1));
+    lsSet('qb.logo', logo);
+    lsSet('qb.biz', JSON.stringify({ n: bizName, p: d.bizPhone, a: d.bizAddr, c: sym() }));
+    current = d;
+    $('#doc').innerHTML = buildDoc(d);
+    $('#ready-title').textContent = 'Your ' + type + ' is ready';
+    $('#status').textContent = '';
+    $('#form-view').hidden = true;
+    $('#result').hidden = false;
+    fit();
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- saving ---------- */
+  async function capture() {
+    if (!window.html2canvas) throw { code: 'noLibs' };
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+    var holder = document.createElement('div');
+    holder.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;pointer-events:none;';
+    var clone = $('#doc').cloneNode(true);
+    clone.removeAttribute('id');
+    clone.style.transform = 'none';
+    holder.appendChild(clone);
+    document.body.appendChild(holder);
+    try {
+      return await window.html2canvas(clone, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
+    } finally { holder.remove(); }
+  }
+  function toBlob(canvas) {
+    return new Promise(function (res, rej) {
+      canvas.toBlob(function (b) { b ? res(b) : rej(new Error('image')); }, 'image/png');
+    });
+  }
+  async function saveFile(name, blob) {
+    var dl = await dlP;
+    if (dl) {
+      try { return await dl.save({ filename: name, data: blob }); }
+      catch (e) {
+        if (e && (e.code === 'declined' || e.code === 'rate_limited' || e.code === 'too_large')) throw e;
+      }
+    }
+    // Plain browser fallback (used when this page runs on its own, outside Claude).
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    return { status: 'saved' };
+  }
+  function baseName() { return (current.type + '-' + current.number).replace(/[^\w.-]+/g, '-'); }
+  function busy(btn, text) { btn._t = btn.textContent; btn.textContent = text; $('#dl-pdf').disabled = $('#dl-img').disabled = true; $('#status').textContent = ''; }
+  function idle(btn) { btn.textContent = btn._t; $('#dl-pdf').disabled = $('#dl-img').disabled = false; }
+  function report(e, what) {
+    var s = $('#status');
+    s.style.color = 'var(--danger)';
+    if (e && e.code === 'declined') s.textContent = 'Not saved. Tap the button to try again.';
+    else if (e && e.code === 'noLibs') s.textContent = 'The save tools did not load. Check your internet and refresh the page.';
+    else s.textContent = 'Could not make the ' + what + '. Please tap the button again.';
+  }
+  function ok(what) { var s = $('#status'); s.style.color = 'var(--accent)'; s.textContent = 'Done. Your ' + what + ' is saved to your phone.'; }
+
+  async function savePdf() {
+    var btn = $('#dl-pdf');
+    busy(btn, 'Making PDF…');
+    try {
+      var canvas = await capture();
+      if (!window.jspdf) throw { code: 'noLibs' };
+      var W = 210, H = 297;
+      var pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      var png = canvas.toDataURL('image/png');
+      var imgH = canvas.height * W / canvas.width;
+      var pages = Math.max(1, Math.ceil(imgH / H - 0.01));
+      for (var i = 0; i < pages; i++) {
+        if (i > 0) pdf.addPage();
+        pdf.addImage(png, 'PNG', 0, -i * H, W, imgH);
+      }
+      var blob = new Blob([pdf.output('arraybuffer')], { type: 'application/pdf' });
+      await saveFile(baseName() + '.pdf', blob);
+      ok('PDF');
+    } catch (e) { report(e, 'PDF'); }
+    finally { idle(btn); }
+  }
+  async function saveImage() {
+    var btn = $('#dl-img');
+    busy(btn, 'Making image…');
+    try {
+      var blob = await toBlob(await capture());
+      await saveFile(baseName() + '.png', blob);
+      ok('image');
+    } catch (e) { report(e, 'image'); }
+    finally { idle(btn); }
+  }
+
+  /* ---------- example ---------- */
+  function fillExample() {
+    $('#biz-name').value = 'Mama Tunde Foods';
+    $('#biz-phone').value = '0801 234 5678';
+    $('#biz-addr').value = '12 Market Road';
+    $('#cust-name').value = 'Mr. Adewale';
+    $('#cust-phone').value = '0802 000 1111';
+    $('#items').innerHTML = '';
+    addItem({ desc: 'Bag of rice (50kg)', qty: 1, price: 85000 });
+    addItem({ desc: 'Vegetable oil (5L)', qty: 2, price: 12500 });
+    addItem({ desc: 'Delivery', qty: 1, price: 3000 });
+    refresh();
+  }
+
+  /* ---------- logo ---------- */
+  var logo = '';
+  function setLogo(url) {
+    logo = url || '';
+    $('#logo-prev').src = logo;
+    $('#logo-box').hidden = !logo;
+    $('#logo-btn').textContent = logo ? 'Change logo' : '+ Add your logo';
+  }
+  function pickLogo(file) {
+    if (!file) return;
+    if (!/^image\//.test(file.type)) return fail('Please choose a picture file (JPG or PNG).');
+    var fr = new FileReader();
+    fr.onerror = function () { fail('Could not read that picture. Try another one.'); };
+    fr.onload = function () {
+      var img = new Image();
+      img.onerror = function () { fail('Could not open that picture. Try a JPG or PNG.'); };
+      img.onload = function () {
+        var s = Math.min(1, 480 / Math.max(img.width, img.height, 1));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.width * s));
+        c.height = Math.max(1, Math.round(img.height * s));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        $('#err').textContent = '';
+        setLogo(c.toDataURL('image/png'));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  }
+
+  /* ---------- start ---------- */
+  var saved = null;
+  try { saved = JSON.parse(lsGet('qb.biz') || 'null'); } catch (e) {}
+  if (saved) {
+    $('#biz-name').value = saved.n || '';
+    $('#biz-phone').value = saved.p || '';
+    $('#biz-addr').value = saved.a || '';
+    if (saved.c) $('#currency').value = saved.c;
+  }
+  var savedLogo = lsGet('qb.logo');
+  if (savedLogo) setLogo(savedLogo);
+  $('#logo-btn').addEventListener('click', function () { $('#logo-file').click(); });
+  $('#logo-file').addEventListener('change', function (e) { pickLogo(e.target.files[0]); e.target.value = ''; });
+  $('#logo-rm').addEventListener('click', function () { setLogo(''); lsSet('qb.logo', ''); });
+  $('#date').value = todayStr();
+  addItem();
+  setType('invoice');
+  refresh();
+
+  $('#t-invoice').addEventListener('click', function () { setType('invoice'); });
+  $('#t-receipt').addEventListener('click', function () { setType('receipt'); });
+  $('#num').addEventListener('input', function () { numAuto = false; });
+  $('#add-item').addEventListener('click', function () { var el = addItem(); refresh(); el.querySelector('.desc').focus(); });
+  $('#items').addEventListener('input', refresh);
+  $('#items').addEventListener('click', function (e) {
+    if (!e.target.classList.contains('rm')) return;
+    var row = e.target.closest('.item');
+    if (document.querySelectorAll('#items .item').length > 1) row.remove();
+    else { row.querySelector('.desc').value = ''; row.querySelector('.qty').value = '1'; row.querySelector('.price').value = ''; }
+    refresh();
+  });
+  $('#discount').addEventListener('input', refresh);
+  $('#currency').addEventListener('change', refresh);
+  $('#example').addEventListener('click', fillExample);
+  $('#go').addEventListener('click', generate);
+  $('#dl-pdf').addEventListener('click', savePdf);
+  $('#dl-img').addEventListener('click', saveImage);
+  $('#edit').addEventListener('click', function () {
+    $('#result').hidden = true;
+    $('#form-view').hidden = false;
+    if (numAuto) $('#num').value = suggest();
+    window.scrollTo(0, 0);
+  });
+  window.addEventListener('resize', function () { if (!$('#result').hidden) fit(); });
+})();
+</script>
+</body>
+</html>
