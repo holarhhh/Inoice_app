@@ -142,6 +142,8 @@ button:disabled { opacity: 0.55; cursor: progress; }
 
 .ready h2 { font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; text-wrap: balance; }
 .ready p.sub { margin: 0 0 16px; color: var(--muted); }
+.notice { display: flex; justify-content: space-between; align-items: center; gap: 4px 16px; flex-wrap: wrap; background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 14px; margin-bottom: 16px; }
+.after { display: flex; gap: 4px 28px; flex-wrap: wrap; }
 .actions { display: grid; gap: 12px; margin: 18px 0 8px; }
 .status { min-height: 1.5em; margin: 8px 0; font-weight: 600; color: var(--ink); }
 .pw { width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper); box-shadow: var(--shadow); position: relative; }
@@ -219,6 +221,10 @@ button:disabled { opacity: 0.55; cursor: progress; }
   </header>
 
   <main id="form-view">
+    <div class="notice" id="draft-note" role="status" hidden>
+      <span id="draft-text">We kept your last invoice so you can fix it.</span>
+      <button type="button" class="link" id="draft-new">Start a new one</button>
+    </div>
     <div class="seg" role="group" aria-label="What do you want to make?">
       <button type="button" id="t-invoice" aria-pressed="true">Invoice</button>
       <button type="button" id="t-receipt" aria-pressed="false">Receipt</button>
@@ -302,7 +308,10 @@ button:disabled { opacity: 0.55; cursor: progress; }
       <button type="button" class="secondary" id="dl-img">Download Image</button>
     </div>
     <p class="status" id="status" role="status"></p>
-    <button type="button" class="link" id="edit">← Change something</button>
+    <div class="after">
+      <button type="button" class="link" id="edit">← Change something</button>
+      <button type="button" class="link" id="again">Start a new one</button>
+    </div>
   </section>
 </div>
 
@@ -381,6 +390,7 @@ button:disabled { opacity: 0.55; cursor: progress; }
     var items = readItems();
     items.forEach(function (it) { it.el.querySelector('.lt').textContent = money(it.qty * it.price); });
     $('#total').textContent = money(totals(items).total);
+    saveDraftSoon();
   }
 
   /* ---------- type switch ---------- */
@@ -394,7 +404,8 @@ button:disabled { opacity: 0.55; cursor: progress; }
     $('#go').textContent = 'Make my ' + t;
     $('#total-label').textContent = t === 'invoice' ? 'Total to pay' : 'Total paid';
     $('#cust-title').textContent = t === 'invoice' ? 'Who is it for?' : 'Who paid you?';
-    if (numAuto) $('#num').value = suggest();
+    if (numAuto) $('#num').value = (issued && issued.type === t) ? issued.number : suggest();
+    saveDraftSoon();
   }
 
   /* ---------- the paper ---------- */
@@ -466,6 +477,9 @@ button:disabled { opacity: 0.55; cursor: progress; }
     lsSet('qb.logo', logo);
     lsSet('qb.biz', JSON.stringify({ n: bizName, p: d.bizPhone, a: d.bizAddr, c: sym() }));
     current = d;
+    issued = { type: type, number: d.number };
+    lastEdit = Date.now();
+    saveDraft();
     $('#doc').innerHTML = buildDoc(d);
     $('#ready-title').textContent = 'Your ' + type + ' is ready';
     $('#status').textContent = '';
@@ -595,10 +609,92 @@ button:disabled { opacity: 0.55; cursor: progress; }
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         $('#err').textContent = '';
         setLogo(c.toDataURL('image/png'));
+        lsSet('qb.logo', logo);
       };
       img.src = fr.result;
     };
     fr.readAsDataURL(file);
+  }
+
+  /* ---------- draft: keep what the person typed ---------- */
+  var DRAFT_KEY = 'qb.draft', DRAFT_MS = 12 * 60 * 60 * 1000;
+  var issued = null, live = false, draftTimer = null, lastEdit = 0;
+
+  function collect() {
+    return {
+      t: lastEdit || Date.now(), type: type, num: $('#num').value, numAuto: numAuto, issued: issued,
+      date: $('#date').value, due: $('#due').value, paidBy: $('#paid-by').value, currency: $('#currency').value,
+      bizName: $('#biz-name').value, bizPhone: $('#biz-phone').value, bizAddr: $('#biz-addr').value,
+      custName: $('#cust-name').value, custPhone: $('#cust-phone').value,
+      discount: $('#discount').value, notes: $('#notes').value,
+      items: Array.prototype.map.call(document.querySelectorAll('#items .item'), function (el) {
+        return { desc: el.querySelector('.desc').value, qty: el.querySelector('.qty').value, price: el.querySelector('.price').value };
+      })
+    };
+  }
+  function saveDraft() {
+    if (!live) return;
+    clearTimeout(draftTimer);
+    var d = collect();
+    lsSet(DRAFT_KEY, JSON.stringify(d));
+    if (d.bizName.trim()) lsSet('qb.biz', JSON.stringify({ n: d.bizName.trim(), p: d.bizPhone.trim(), a: d.bizAddr.trim(), c: d.currency }));
+  }
+  function saveDraftSoon() {
+    if (!live) return;
+    lastEdit = Date.now();
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(saveDraft, 300);
+  }
+  function restoreDraft() {
+    var d = null;
+    try { d = JSON.parse(lsGet(DRAFT_KEY) || 'null'); } catch (e) { d = null; }
+    if (!d || !d.t || Date.now() - d.t > DRAFT_MS) return;
+    var items = Array.isArray(d.items) ? d.items : [];
+    var has = items.some(function (it) { return (it.desc && String(it.desc).trim()) || num(it.price) > 0; });
+    if (!has) return;
+    lastEdit = d.t;
+    numAuto = d.numAuto !== false;
+    issued = d.issued && d.issued.number ? d.issued : null;
+    setType(d.type === 'receipt' ? 'receipt' : 'invoice');
+    if (d.num) $('#num').value = d.num;
+    $('#date').value = d.date || todayStr();
+    $('#due').value = d.due || '';
+    if (d.paidBy) $('#paid-by').value = d.paidBy;
+    if (d.currency) $('#currency').value = d.currency;
+    if (d.bizName) {
+      $('#biz-name').value = d.bizName;
+      $('#biz-phone').value = d.bizPhone || '';
+      $('#biz-addr').value = d.bizAddr || '';
+    }
+    $('#cust-name').value = d.custName || '';
+    $('#cust-phone').value = d.custPhone || '';
+    $('#discount').value = d.discount || '';
+    $('#notes').value = d.notes || '';
+    $('#items').innerHTML = '';
+    items.forEach(function (it) { addItem(it); });
+    refresh();
+    $('#draft-text').textContent = 'We kept your last ' + (d.type === 'receipt' ? 'receipt' : 'invoice') + (d.num ? ' (' + d.num + ')' : '') + ' so you can fix it.';
+    $('#draft-note').hidden = false;
+  }
+  function newOne() {
+    issued = null;
+    numAuto = true;
+    $('#cust-name').value = '';
+    $('#cust-phone').value = '';
+    $('#discount').value = '';
+    $('#notes').value = '';
+    $('#due').value = '';
+    $('#date').value = todayStr();
+    $('#paid-by').selectedIndex = 0;
+    $('#items').innerHTML = '';
+    addItem();
+    $('#num').value = suggest();
+    $('#draft-note').hidden = true;
+    $('#err').textContent = '';
+    $('#result').hidden = true;
+    $('#form-view').hidden = false;
+    refresh();
+    window.scrollTo(0, 0);
   }
 
   /* ---------- start ---------- */
@@ -619,6 +715,7 @@ button:disabled { opacity: 0.55; cursor: progress; }
   addItem();
   setType('invoice');
   refresh();
+  restoreDraft();
 
   $('#t-invoice').addEventListener('click', function () { setType('invoice'); });
   $('#t-receipt').addEventListener('click', function () { setType('receipt'); });
@@ -641,9 +738,15 @@ button:disabled { opacity: 0.55; cursor: progress; }
   $('#edit').addEventListener('click', function () {
     $('#result').hidden = true;
     $('#form-view').hidden = false;
-    if (numAuto) $('#num').value = suggest();
     window.scrollTo(0, 0);
   });
+  $('#again').addEventListener('click', newOne);
+  $('#draft-new').addEventListener('click', newOne);
+  $('#form-view').addEventListener('input', saveDraftSoon);
+  $('#form-view').addEventListener('change', saveDraftSoon);
+  window.addEventListener('pagehide', saveDraft);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') saveDraft(); });
+  live = true;
   window.addEventListener('resize', function () { if (!$('#result').hidden) fit(); });
 })();
 </script>
