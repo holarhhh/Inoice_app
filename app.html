@@ -144,6 +144,8 @@ button:disabled { opacity: 0.55; cursor: progress; }
 .ready p.sub { margin: 0 0 16px; color: var(--muted); }
 .notice { display: flex; justify-content: space-between; align-items: center; gap: 4px 16px; flex-wrap: wrap; background: var(--soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 14px; margin-bottom: 16px; }
 .after { display: flex; gap: 4px 28px; flex-wrap: wrap; }
+.made { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 15px; }
+.made a { color: var(--ink); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
 .actions { display: grid; gap: 12px; margin: 18px 0 8px; }
 .status { min-height: 1.5em; margin: 8px 0; font-weight: 600; color: var(--ink); }
 .pw { width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper); box-shadow: var(--shadow); position: relative; }
@@ -204,6 +206,7 @@ button:disabled { opacity: 0.55; cursor: progress; }
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script defer src="mail.js"></script>
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -313,6 +316,7 @@ button:disabled { opacity: 0.55; cursor: progress; }
       <button type="button" class="link" id="again">Start a new one</button>
     </div>
   </section>
+  <footer class="made">Made by <span data-mail></span></footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
