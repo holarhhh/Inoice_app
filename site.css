@@ -141,6 +141,8 @@ p { margin: 0; }
 .site-foot nav { display: flex; gap: 20px; flex-wrap: wrap; }
 .site-foot a { text-decoration: none; padding-block: 8px; }
 .site-foot a:hover { color: var(--black); text-decoration: underline; }
+.copy-btn { margin-left: 10px; font: 600 14px/1 var(--font); color: var(--black); background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 9px 12px; cursor: pointer; }
+.copy-btn:hover { background: var(--gray-50); border-color: var(--gray-500); }
 .site-foot a.mail-link { color: var(--black); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
 
 /* how it works page */
